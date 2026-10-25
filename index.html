@@ -18,7 +18,6 @@
 <body>
   <header class="site-header">
     <h1>Watermark Tool</h1>
-    <p class="tagline">Watermark IDs and documents before you send them. <strong>Your files never leave this device.</strong></p>
   </header>
 
   <main class="layout">
@@ -26,18 +25,18 @@
       <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-describedby="drop-hint">
         <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf,.pdf" multiple hidden>
         <p class="drop-title">Drop files here or <span class="link">browse</span></p>
-        <p id="drop-hint" class="hint">JPG, PNG, WebP or PDF · several at once is fine</p>
+        <p id="drop-hint" class="hint">JPG, PNG, WebP or PDF · one or many</p>
       </div>
 
       <ul id="file-list" class="file-list" aria-label="Added files" hidden></ul>
 
       <form id="settings" autocomplete="off">
-        <fieldset>
-          <legend>Watermark</legend>
+        <label for="wm-text" class="text-label">Watermark text</label>
+        <textarea id="wm-text" name="text" rows="2">ONLY FOR RENTAL APPLICATION</textarea>
+        <button type="button" id="add-date" class="btn-link">+ Add today's date</button>
 
-          <label for="wm-text">Text</label>
-          <textarea id="wm-text" name="text" rows="3">ONLY FOR RENTAL APPLICATION</textarea>
-          <button type="button" id="add-date" class="btn-small">+ Add today's date</button>
+        <details id="advanced" class="advanced">
+          <summary>Advanced options <span class="summary-hint">opacity, size, angle, color, layout, file size</span></summary>
 
           <div class="row">
             <label for="opacity">Opacity <output for="opacity" id="opacity-out">30%</output></label>
@@ -71,10 +70,6 @@
             <label for="spacing">Spacing <output for="spacing" id="spacing-out">2×</output></label>
             <input id="spacing" name="spacing" type="range" min="0.5" max="5" step="0.25" value="2">
           </div>
-        </fieldset>
-
-        <fieldset>
-          <legend>Output</legend>
 
           <div class="row" role="radiogroup" aria-labelledby="quality-label">
             <span id="quality-label" class="label">File size</span>
@@ -94,11 +89,13 @@
           </div>
 
           <label class="check"><input type="checkbox" name="grayscale" id="grayscale"> Black &amp; white</label>
-        </fieldset>
+
+          <button type="button" id="restore-defaults" class="btn-link">Restore defaults</button>
+        </details>
 
         <div class="actions">
-          <button type="submit" id="download" class="btn-primary" disabled>Download watermarked file</button>
-          <button type="button" id="reset" class="btn-secondary" disabled>Clear all</button>
+          <button type="submit" id="download" class="btn-primary" disabled>Download</button>
+          <button type="button" id="reset" class="btn-secondary" disabled>Clear</button>
         </div>
 
         <div id="progress" class="progress" hidden>
@@ -121,9 +118,5 @@
       </nav>
     </section>
   </main>
-
-  <footer class="site-footer">
-    <p>Runs 100% in your browser: no uploads, no analytics, no cookies. PDF pages are flattened to images so the watermark can't be removed. <a href="https://github.com/pedrograu/watermark-tool" rel="noopener noreferrer">Source code</a></p>
-  </footer>
 </body>
 </html>

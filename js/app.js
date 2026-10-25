@@ -58,9 +58,7 @@ function updateOutputs() {
   $('spacing-out').value = `${s.spacing}×`;
   $('spacing-row').hidden = s.layout !== 'tiled';
   $('format-row').hidden = !state.docs.some((d) => d.kind === 'image');
-  $('download').textContent = state.docs.length > 1
-    ? `Download ${state.docs.length} watermarked files`
-    : 'Download watermarked file';
+  $('download').textContent = state.docs.length > 1 ? `Download ${state.docs.length} files` : 'Download';
 }
 
 // ---------- Status ----------
@@ -454,6 +452,17 @@ $('add-date').addEventListener('click', () => {
   const textarea = $('wm-text');
   const date = new Date().toLocaleDateString();
   textarea.value = `${textarea.value.replace(/\s+$/, '')}\n${date}`.trim();
+  form.dispatchEvent(new Event('input'));
+});
+
+// Put every advanced option back to the value written in the HTML,
+// leaving the watermark text alone.
+$('restore-defaults').addEventListener('click', () => {
+  for (const el of $('advanced').querySelectorAll('input, select')) {
+    if (el.type === 'radio' || el.type === 'checkbox') el.checked = el.defaultChecked;
+    else if (el.tagName === 'SELECT') for (const o of el.options) o.selected = o.defaultSelected;
+    else el.value = el.defaultValue;
+  }
   form.dispatchEvent(new Event('input'));
 });
 
