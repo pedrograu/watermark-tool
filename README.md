@@ -19,6 +19,9 @@ you have to send with a rental application — **entirely in your browser**.
 ## Features
 
 - JPG, PNG, WebP and PDF (multi-page) input.
+- Several files at once (up to 50): the same settings apply to all, click a
+  file in the list to preview it, and each one downloads as its own
+  watermarked file.
 - Watermark text (multi-line), opacity, size, angle, color.
 - Tiled (repeated, hard to crop) or single centered layout.
 - Live preview with page navigation for PDFs.
