@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!--
+    Privacy guarantee: connect-src 'none' makes the browser refuse any
+    fetch/XHR/WebSocket/beacon from this page, so files can never be uploaded.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; worker-src 'self'; style-src 'self'; img-src 'self' blob: data:; font-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Add a semi-transparent text watermark to images and PDFs. Everything runs in your browser; nothing is uploaded.">
+  <title>Watermark Tool</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <h1>Watermark Tool</h1>
+    <p class="tagline">Watermark IDs and documents before you send them. <strong>Your files never leave this device.</strong></p>
+  </header>
+
+  <main class="layout">
+    <section class="panel controls" aria-label="Settings">
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-describedby="drop-hint">
+        <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf,.pdf" hidden>
+        <p class="drop-title">Drop a file here or <span class="link">browse</span></p>
+        <p id="drop-hint" class="hint">JPG, PNG, WebP or PDF</p>
+        <p id="file-name" class="file-name" hidden></p>
+      </div>
+
+      <form id="settings" autocomplete="off">
+        <fieldset>
+          <legend>Watermark</legend>
+
+          <label for="wm-text">Text</label>
+          <textarea id="wm-text" name="text" rows="3">ONLY FOR RENTAL APPLICATION</textarea>
+          <button type="button" id="add-date" class="btn-small">+ Add today's date</button>
+
+          <div class="row">
+            <label for="opacity">Opacity <output for="opacity" id="opacity-out">30%</output></label>
+            <input id="opacity" name="opacity" type="range" min="5" max="100" value="30">
+          </div>
+
+          <div class="row">
+            <label for="size">Text size <output for="size" id="size-out">5%</output></label>
+            <input id="size" name="size" type="range" min="2" max="20" step="0.5" value="5">
+          </div>
+
+          <div class="row">
+            <label for="angle">Angle <output for="angle" id="angle-out">-30°</output></label>
+            <input id="angle" name="angle" type="range" min="-90" max="90" value="-30">
+          </div>
+
+          <div class="row inline">
+            <label for="color">Color</label>
+            <input id="color" name="color" type="color" value="#5a5a5a">
+          </div>
+
+          <div class="row" role="radiogroup" aria-labelledby="layout-label">
+            <span id="layout-label" class="label">Layout</span>
+            <div class="segmented">
+              <label><input type="radio" name="layout" value="tiled" checked> Tiled</label>
+              <label><input type="radio" name="layout" value="single"> Single</label>
+            </div>
+          </div>
+
+          <div class="row" id="spacing-row">
+            <label for="spacing">Spacing <output for="spacing" id="spacing-out">2×</output></label>
+            <input id="spacing" name="spacing" type="range" min="0.5" max="5" step="0.25" value="2">
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Output</legend>
+
+          <div class="row" role="radiogroup" aria-labelledby="quality-label">
+            <span id="quality-label" class="label">File size</span>
+            <div class="segmented">
+              <label><input type="radio" name="quality" value="small"> Small</label>
+              <label><input type="radio" name="quality" value="balanced" checked> Balanced</label>
+              <label><input type="radio" name="quality" value="high"> High</label>
+            </div>
+          </div>
+
+          <div class="row inline" id="format-row">
+            <label for="format">Image format</label>
+            <select id="format" name="format">
+              <option value="image/jpeg" selected>JPEG (smaller)</option>
+              <option value="image/png">PNG (lossless, larger)</option>
+            </select>
+          </div>
+
+          <label class="check"><input type="checkbox" name="grayscale" id="grayscale"> Black &amp; white</label>
+        </fieldset>
+
+        <div class="actions">
+          <button type="submit" id="download" class="btn-primary" disabled>Download watermarked file</button>
+          <button type="button" id="reset" class="btn-secondary" disabled>Clear</button>
+        </div>
+
+        <div id="progress" class="progress" hidden>
+          <progress id="progress-bar" max="1" value="0"></progress>
+          <span id="progress-text"></span>
+        </div>
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="panel preview" aria-label="Preview">
+      <div class="preview-stage">
+        <canvas id="preview" aria-label="Watermarked preview" hidden></canvas>
+        <p id="preview-empty" class="preview-empty">The preview will appear here.</p>
+      </div>
+      <nav id="pager" class="pager" aria-label="PDF pages" hidden>
+        <button type="button" id="prev-page" class="btn-small" aria-label="Previous page">‹ Prev</button>
+        <span id="page-info"></span>
+        <button type="button" id="next-page" class="btn-small" aria-label="Next page">Next ›</button>
+      </nav>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>Runs 100% in your browser: no uploads, no analytics, no cookies. PDF pages are flattened to images so the watermark can't be removed. <a href="https://github.com/pedrograu/watermark-tool" rel="noopener noreferrer">Source code</a></p>
+  </footer>
+</body>
+</html>
