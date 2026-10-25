@@ -1,9 +1,9 @@
 // UI wiring. Everything happens in memory in this tab; nothing is stored
 // or sent anywhere.
 
-import { drawWatermark, toGrayscale, createCanvas, canvasToBlob, releaseCanvas, clampScale } from './watermark.js';
-import { openPdf, renderPage } from './pdf-reader.js';
-import { buildPdf } from './pdf-writer.js';
+import { drawWatermark, toGrayscale, createCanvas, canvasToBlob, releaseCanvas, clampScale } from './watermark.js?v=dev';
+import { openPdf, renderPage } from './pdf-reader.js?v=dev';
+import { buildPdf } from './pdf-writer.js?v=dev';
 
 // Output presets. PDFs are rendered at `dpi`; images are downscaled so the
 // long edge is at most `maxEdge`. `quality` is the JPEG quality.

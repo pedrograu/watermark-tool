@@ -26,6 +26,8 @@ jobs:
         run: |
           mkdir _site
           cp -r index.html favicon.svg .nojekyll css js vendor _site/
+          # Cache-bust our own CSS/JS so a new deploy never mixes with cached old files
+          grep -rl '?v=dev' _site/index.html _site/js | xargs sed -i "s/?v=dev/?v=${GITHUB_SHA::7}/g"
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -1,7 +1,7 @@
 // Thin wrapper around the self-hosted pdf.js. The library (~1.7 MB) is only
 // loaded the first time a PDF is opened, so image-only use stays light.
 
-import { createCanvas, clampScale } from './watermark.js';
+import { createCanvas, clampScale } from './watermark.js?v=dev';
 
 let pdfjsPromise = null;
 
