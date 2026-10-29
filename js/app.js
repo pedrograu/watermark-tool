@@ -61,7 +61,7 @@ function updateOutputs() {
   $('spacing-out').value = `${s.spacing}×`;
   $('spacing-row').hidden = s.layout !== 'tiled';
   $('format-row').hidden = !state.docs.some((d) => d.kind === 'image');
-  $('download').textContent = state.docs.length > 1 ? `Download ${state.docs.length} files` : 'Download';
+  $('download-label').textContent = state.docs.length > 1 ? `Download ${state.docs.length}` : 'Download';
 }
 
 // ---------- Status ----------
@@ -127,8 +127,8 @@ async function probe(file) {
 
 function describeError(file, err) {
   return err?.name === 'PasswordException'
-    ? `${file.name} is password-protected`
-    : `${file.name} could not be read`;
+    ? `${file.name} (password)`
+    : file.name;
 }
 
 async function addFiles(fileList) {
@@ -137,13 +137,13 @@ async function addFiles(fileList) {
   const skipped = [];
   const room = MAX_FILES - state.docs.length;
   if (files.length > room) {
-    skipped.push(`only ${MAX_FILES} files at a time`);
+    skipped.push(`files over ${MAX_FILES}`);
     files = files.slice(0, Math.max(0, room));
   }
-  if (!files.length) return void setStatus(`Skipped: ${skipped.join('; ')}.`, true);
+  if (!files.length) return void setStatus(`Skipped ${skipped.join(', ')}`, true);
 
   setBusy(true);
-  setStatus(files.length > 1 ? `Reading ${files.length} files…` : 'Loading…');
+  setStatus('Loading…');
   const firstNew = state.docs.length;
   for (const file of files) {
     try {
@@ -159,9 +159,9 @@ async function addFiles(fileList) {
 
   const pages = state.docs.reduce((sum, d) => sum + d.pageCount, 0);
   if (skipped.length) {
-    setStatus(`Skipped: ${skipped.join('; ')}. Use JPG, PNG, WebP or PDF without a password.`, true);
+    setStatus(`Couldn't open ${skipped.join(', ')}`, true);
   } else {
-    setStatus(pages > 50 ? `${pages} pages in total; generating may take a while.` : '');
+    setStatus(pages > 50 ? `${pages} pages · this may take a moment` : '');
   }
   if (state.docs.length > firstNew) await selectDoc(firstNew);
 }
@@ -182,7 +182,7 @@ async function selectDoc(index) {
     await refreshPreviewBase();
   } catch (err) {
     console.error(err);
-    if (token === state.loadToken) setStatus(`${describeError(doc.file, err)}.`, true);
+    if (token === state.loadToken) setStatus(`Couldn't open ${describeError(doc.file, err)}`, true);
   }
 }
 
@@ -230,14 +230,15 @@ function renderFileList() {
     const meta = document.createElement('span');
     meta.className = 'meta';
     const pages = doc.kind === 'pdf' ? ` · ${doc.pageCount} page${doc.pageCount > 1 ? 's' : ''}` : '';
-    meta.textContent = `${doc.kind === 'pdf' ? 'PDF' : 'Image'}${pages} · ${formatBytes(doc.file.size)}`;
+    meta.textContent = doc.kind === 'pdf' ? `${doc.pageCount} page${doc.pageCount > 1 ? 's' : ''}` : formatBytes(doc.file.size);
+    meta.title = `${doc.kind === 'pdf' ? `PDF${pages}` : 'Image'} · ${formatBytes(doc.file.size)}`;
     select.append(name, meta);
     select.addEventListener('click', () => i !== state.selected && selectDoc(i));
 
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'file-remove';
-    remove.textContent = '✕';
+    remove.innerHTML = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
     remove.setAttribute('aria-label', `Remove ${doc.file.name}`);
     remove.addEventListener('click', () => removeDoc(i));
 
@@ -245,6 +246,7 @@ function renderFileList() {
     return li;
   }));
   list.hidden = !state.docs.length;
+  document.body.classList.toggle('has-files', state.docs.length > 0);
   for (const button of list.querySelectorAll('button')) button.disabled = state.busy;
 }
 
@@ -287,7 +289,7 @@ function updateHideToolbar() {
   const count = currentRegions(false).length;
   $('hide-toolbar').hidden = !state.previewBase;
   $('hide-toggle').setAttribute('aria-pressed', String(drawing));
-  $('hide-toggle').textContent = drawing ? 'Done' : 'Hide an area';
+  $('hide-toggle-label').textContent = drawing ? 'Done' : 'Hide';
   $('hide-style').hidden = !drawing && !count;
   // Shown together with the styles (not on first area) so the preview never jumps while drawing
   $('hide-clear').hidden = !drawing && !count;
@@ -316,7 +318,7 @@ async function refreshPreviewBase() {
     const r = await renderPage(source.pdf, state.page, (w, h) => PREVIEW_MAX_EDGE / Math.max(w, h));
     if (token !== state.loadToken) return releaseCanvas(r.canvas);
     base = r.canvas;
-    $('page-info').textContent = `Page ${state.page} of ${pageCount}`;
+    $('page-info').textContent = `${state.page} / ${pageCount}`;
     $('prev-page').disabled = state.page <= 1;
     $('next-page').disabled = state.page >= pageCount;
     $('pager').hidden = pageCount < 2;
@@ -447,7 +449,7 @@ async function onExport(event) {
   if (state.busy || !state.docs.length) return;
   const s = getSettings();
   if (!s.text.trim()) {
-    setStatus('Enter some watermark text first.', true);
+    setStatus('Add some text first', true);
     $('wm-text').focus();
     return;
   }
@@ -457,13 +459,13 @@ async function onExport(event) {
   const totalPages = docs.reduce((sum, d) => sum + d.pageCount, 0);
   let pagesDone = 0;
   const progressFor = (fileIndex, doc) => (n) => {
-    const file = many ? `File ${fileIndex + 1} of ${docs.length}` : '';
-    const page = doc.pageCount > 1 ? `page ${n} of ${doc.pageCount}` : '';
-    setProgress(pagesDone++ / totalPages, [file, page].filter(Boolean).join(' · ') || 'Working…');
+    const file = many ? `${fileIndex + 1}/${docs.length}` : '';
+    const page = doc.pageCount > 1 ? `p. ${n}/${doc.pageCount}` : '';
+    setProgress(pagesDone++ / totalPages, [file, page].filter(Boolean).join(' · '));
   };
 
   setBusy(true);
-  setStatus('Generating…');
+  setStatus('');
   try {
     const results = [];
     for (const [i, doc] of docs.entries()) results.push(await exportDoc(doc, s, preset, progressFor(i, doc)));
@@ -478,13 +480,12 @@ async function onExport(event) {
     const change = ratio >= 2
       ? `${ratio.toFixed(1)}× larger`
       : `${ratio < 1 ? '−' : '+'}${Math.abs(Math.round((ratio - 1) * 100))}%`;
-    let msg = `Done: ${formatBytes(before)} → ${formatBytes(outputSize)} (${change}).`;
-    if (ratio > 1.5 && s.quality !== 'small') msg += ' Tip: choose “Small” for a lighter file.';
-    if (many) msg += ' If your browser asks, allow multiple downloads.';
+    let msg = `✓ ${formatBytes(outputSize)} (${change})`;
+    if (ratio > 1.5 && s.quality !== 'small') msg += ' · smaller: Options → File size';
     setStatus(msg);
   } catch (err) {
     console.error(err);
-    setStatus('Something went wrong while generating. Try the “Small” size or fewer files at once.', true);
+    setStatus('Something went wrong. Try a smaller file size in Options.', true);
   } finally {
     setProgress(null);
     setBusy(false);

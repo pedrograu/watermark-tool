@@ -24,23 +24,23 @@ you have to send with a rental application — **entirely in your browser**.
   watermarked file.
 - Watermark text (multi-line), opacity, size, angle, color.
 - Tiled (repeated, hard to crop) or single centered layout.
-- **Hide areas** such as the ID number: click *Hide an area* above the preview
+- **Hide areas** such as the ID number: click *Hide* above the preview
   and drag over it. Areas can be moved, resized and removed, and belong to one
-  page of one file. Styles: **Black box** (recommended for numbers and other
+  page of one file. Styles: **Box** (recommended for numbers and other
   sensitive data), **Pixelate** and **Blur**. Blurred or pixelated text can
-  sometimes be guessed back, so use Black box for anything sensitive. Because
+  sometimes be guessed back, so use Box for anything sensitive. Because
   the output is flattened, the hidden content is not in the file at all.
 - Live preview with page navigation for PDFs.
 - PDFs are **flattened**: each page becomes an image with the watermark burned
   in, so the watermark can't be removed with a PDF editor. The output text is
   not selectable.
-- File size presets (Small / Balanced / High) and a Black & white option to
+- File size presets (Small / Medium / High) and a Black & white option to
   keep the output small. The original and new sizes are shown after export.
 
 | Preset   | PDF resolution | Image max edge | JPEG quality |
 |----------|----------------|----------------|--------------|
 | Small    | 100 DPI        | 1600 px        | 0.60         |
-| Balanced | 144 DPI        | 2400 px        | 0.72         |
+| Medium   | 144 DPI        | 2400 px        | 0.72         |
 | High     | 200 DPI        | original       | 0.85         |
 
 ## Run locally

@@ -10,33 +10,38 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; worker-src 'self'; style-src 'self'; img-src 'self' blob: data:; font-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="referrer" content="no-referrer">
   <meta name="description" content="Add a semi-transparent text watermark to images and PDFs. Everything runs in your browser; nothing is uploaded.">
-  <title>Watermark Tool</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <title>Watermark</title>
+  <link rel="icon" href="favicon.svg?v=dev" type="image/svg+xml">
   <link rel="stylesheet" href="css/styles.css?v=dev">
   <script type="module" src="js/app.js?v=dev"></script>
 </head>
 <body>
   <header class="site-header">
-    <h1>Watermark Tool</h1>
+    <h1><img src="favicon.svg?v=dev" alt="" class="logo"> Watermark</h1>
   </header>
 
   <main class="layout">
     <section class="panel controls" aria-label="Settings">
-      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-describedby="drop-hint">
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Add files">
         <input id="file-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,application/pdf,.pdf" multiple hidden>
-        <p class="drop-title">Drop files here or <span class="link">browse</span></p>
-        <p id="drop-hint" class="hint">JPG, PNG, WebP or PDF · one or many</p>
+        <span class="drop-big">
+          <img src="favicon.svg?v=dev" alt="" class="logo-big">
+          <span class="drop-name">Watermark</span>
+          <span class="drop-title">Drop images or PDFs, or <span class="link">browse</span></span>
+        </span>
+        <span class="drop-small"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Add files</span>
       </div>
 
-      <ul id="file-list" class="file-list" aria-label="Added files" hidden></ul>
+      <ul id="file-list" class="file-list" aria-label="Files" hidden></ul>
 
       <form id="settings" autocomplete="off">
-        <label for="wm-text" class="text-label">Watermark text</label>
-        <textarea id="wm-text" name="text" rows="2">ONLY FOR RENTAL APPLICATION</textarea>
-        <button type="button" id="add-date" class="btn-link">+ Add today's date</button>
+        <div class="text-box">
+          <textarea id="wm-text" name="text" rows="2" placeholder="Watermark text" aria-label="Watermark text">ONLY FOR RENTAL APPLICATION</textarea>
+          <button type="button" id="add-date" class="chip" title="Add today's date"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v4M16 3v4M4 9h16M6 5h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z"/></svg> Date</button>
+        </div>
 
         <details id="advanced" class="advanced">
-          <summary>Advanced options <span class="summary-hint">opacity, size, angle, color, layout, file size</span></summary>
+          <summary><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4"/></svg> Options</summary>
 
           <div class="row">
             <label for="opacity">Opacity <output for="opacity" id="opacity-out">30%</output></label>
@@ -44,7 +49,7 @@
           </div>
 
           <div class="row">
-            <label for="size">Text size <output for="size" id="size-out">5%</output></label>
+            <label for="size">Size <output for="size" id="size-out">5%</output></label>
             <input id="size" name="size" type="range" min="2" max="20" step="0.5" value="5">
           </div>
 
@@ -58,7 +63,7 @@
             <input id="color" name="color" type="color" value="#5a5a5a">
           </div>
 
-          <div class="row" role="radiogroup" aria-labelledby="layout-label">
+          <div class="row inline" role="radiogroup" aria-labelledby="layout-label">
             <span id="layout-label" class="label">Layout</span>
             <div class="segmented">
               <label><input type="radio" name="layout" value="tiled" checked> Tiled</label>
@@ -71,31 +76,32 @@
             <input id="spacing" name="spacing" type="range" min="0.5" max="5" step="0.25" value="2">
           </div>
 
-          <div class="row" role="radiogroup" aria-labelledby="quality-label">
+          <div class="row inline" role="radiogroup" aria-labelledby="quality-label">
             <span id="quality-label" class="label">File size</span>
             <div class="segmented">
               <label><input type="radio" name="quality" value="small"> Small</label>
-              <label><input type="radio" name="quality" value="balanced" checked> Balanced</label>
+              <label><input type="radio" name="quality" value="balanced" checked> Medium</label>
               <label><input type="radio" name="quality" value="high"> High</label>
             </div>
           </div>
 
-          <div class="row inline" id="format-row">
-            <label for="format">Image format</label>
-            <select id="format" name="format">
-              <option value="image/jpeg" selected>JPEG (smaller)</option>
-              <option value="image/png">PNG (lossless, larger)</option>
-            </select>
+          <div class="row inline" id="format-row" role="radiogroup" aria-labelledby="format-label">
+            <span id="format-label" class="label">Format</span>
+            <div class="segmented">
+              <label><input type="radio" name="format" value="image/jpeg" checked> JPEG</label>
+              <label><input type="radio" name="format" value="image/png"> PNG</label>
+            </div>
           </div>
 
-          <label class="check"><input type="checkbox" name="grayscale" id="grayscale"> Black &amp; white</label>
-
-          <button type="button" id="restore-defaults" class="btn-link">Restore defaults</button>
+          <div class="row inline">
+            <label class="check"><input type="checkbox" name="grayscale" id="grayscale"> Black &amp; white</label>
+            <button type="button" id="restore-defaults" class="btn-link">Reset</button>
+          </div>
         </details>
 
         <div class="actions">
-          <button type="submit" id="download" class="btn-primary" disabled>Download</button>
-          <button type="button" id="reset" class="btn-secondary" disabled>Clear</button>
+          <button type="submit" id="download" class="btn-primary" disabled><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-4-4m4 4 4-4M4 20h16"/></svg> <span id="download-label">Download</span></button>
+          <button type="button" id="reset" class="btn-icon" disabled aria-label="Remove all files" title="Remove all files"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>
         </div>
 
         <div id="progress" class="progress" hidden>
@@ -108,26 +114,26 @@
 
     <section class="panel preview" aria-label="Preview">
       <div id="hide-toolbar" class="hide-toolbar" hidden>
-        <button type="button" id="hide-toggle" class="btn-small" aria-pressed="false">Hide an area</button>
+        <button type="button" id="hide-toggle" class="chip" aria-pressed="false" title="Cover part of the page, e.g. an ID number"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M9.4 5.2A9.5 9.5 0 0 1 12 5c5 0 8.5 4.5 9.5 7a12 12 0 0 1-2.4 3.4M6.5 6.6C4.5 8 3.1 10 2.5 12c1 2.5 4.5 7 9.5 7a9.6 9.6 0 0 0 4.5-1.1"/></svg> <span id="hide-toggle-label">Hide</span></button>
         <div id="hide-style" class="segmented compact" role="radiogroup" aria-label="How to hide" hidden>
-          <label><input type="radio" form="settings" name="hide" value="box" checked> Black box</label>
+          <label><input type="radio" form="settings" name="hide" value="box" checked> Box</label>
           <label><input type="radio" form="settings" name="hide" value="pixelate"> Pixelate</label>
-          <label title="Blurred numbers can sometimes be guessed back. Use Black box for sensitive data."><input type="radio" form="settings" name="hide" value="blur"> Blur</label>
+          <label title="Blurred numbers can sometimes be guessed back. Use Box for sensitive data."><input type="radio" form="settings" name="hide" value="blur"> Blur</label>
         </div>
-        <button type="button" id="hide-clear" class="btn-link" hidden>Remove areas</button>
+        <button type="button" id="hide-clear" class="btn-icon small" aria-label="Remove hidden areas on this page" title="Remove hidden areas" hidden><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>
       </div>
       <div class="preview-stage">
-        <p id="hide-hint" class="hide-hint" hidden>Drag over the part to hide · this page only</p>
+        <p id="hide-hint" class="hide-hint" hidden>Drag to cover</p>
         <div class="canvas-wrap">
-          <canvas id="preview" aria-label="Watermarked preview" hidden></canvas>
+          <canvas id="preview" aria-label="Preview" hidden></canvas>
           <div id="region-overlay" class="region-overlay"></div>
         </div>
-        <p id="preview-empty" class="preview-empty">The preview will appear here.</p>
+        <p id="preview-empty" class="preview-empty"></p>
       </div>
-      <nav id="pager" class="pager" aria-label="PDF pages" hidden>
-        <button type="button" id="prev-page" class="btn-small" aria-label="Previous page">‹ Prev</button>
+      <nav id="pager" class="pager" aria-label="Pages" hidden>
+        <button type="button" id="prev-page" class="btn-icon small" aria-label="Previous page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>
         <span id="page-info"></span>
-        <button type="button" id="next-page" class="btn-small" aria-label="Next page">Next ›</button>
+        <button type="button" id="next-page" class="btn-icon small" aria-label="Next page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
       </nav>
     </section>
   </main>
