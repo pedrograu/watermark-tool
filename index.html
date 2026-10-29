@@ -122,13 +122,16 @@
         </div>
         <button type="button" id="hide-clear" class="btn-icon small" aria-label="Remove hidden areas on this page" title="Remove hidden areas" hidden><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>
       </div>
-      <div class="preview-stage">
-        <p id="hide-hint" class="hide-hint" hidden>Drag to cover</p>
-        <div class="canvas-wrap">
-          <canvas id="preview" aria-label="Preview" hidden></canvas>
-          <div id="region-overlay" class="region-overlay"></div>
+      <div class="stage-box">
+        <div id="stage" class="preview-stage">
+          <div class="canvas-wrap">
+            <canvas id="preview" aria-label="Preview" hidden></canvas>
+            <div id="region-overlay" class="region-overlay"></div>
+          </div>
+          <p id="preview-empty" class="preview-empty"></p>
         </div>
-        <p id="preview-empty" class="preview-empty"></p>
+        <p id="hide-hint" class="hide-hint" hidden>Drag to cover</p>
+        <p id="zoom-badge" class="zoom-badge" aria-live="polite" hidden></p>
       </div>
       <nav id="pager" class="pager" aria-label="Pages" hidden>
         <button type="button" id="prev-page" class="btn-icon small" aria-label="Previous page"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></button>

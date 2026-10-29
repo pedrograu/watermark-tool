@@ -31,6 +31,8 @@ you have to send with a rental application — **entirely in your browser**.
   sometimes be guessed back, so use Box for anything sensitive. Because
   the output is flattened, the hidden content is not in the file at all.
 - Live preview with page navigation for PDFs.
+- Zoom the preview with the mouse wheel, a trackpad pinch or two fingers on a
+  phone; double-click / double-tap toggles zoom, drag to move around.
 - PDFs are **flattened**: each page becomes an image with the watermark burned
   in, so the watermark can't be removed with a PDF editor. The output text is
   not selectable.
@@ -70,6 +72,7 @@ js/pdf-reader.js      pdf.js wrapper: PDF page → canvas
 js/pdf-writer.js      minimal PDF writer: JPEG pages → PDF
 js/redact.js          paints hidden areas (box / pixelate / blur)
 js/region-editor.js   draw, move, resize hidden areas on the preview
+js/zoom.js            wheel / pinch / double-tap zoom and panning of the preview
 vendor/pdfjs/         pdf.js 4.10.38 (Apache-2.0), self-hosted
 ```
 

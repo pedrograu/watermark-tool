@@ -292,15 +292,36 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 
 /* ---------- Preview ---------- */
 .preview { padding: 12px; }
+.stage-box { position: relative; }
 .preview-stage {
-  position: relative;
   background: var(--stage);
   border-radius: var(--radius-sm);
   min-height: 360px;
   display: flex;
-  align-items: center;
-  justify-content: center;
   padding: 20px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+/* margin:auto centers the page and still lets a zoomed page scroll to every edge */
+.canvas-wrap { margin: auto; }
+.preview-stage.zoomed #preview { max-width: none; max-height: none; }
+.preview-stage.zoomed .region-overlay:not(.drawing) { cursor: grab; }
+.preview-stage.panning, .preview-stage.panning .region-overlay { cursor: grabbing !important; }
+
+/* Wheel / pinch zoom: the stage handles pinch itself, one-finger scroll stays native */
+.preview-stage { touch-action: pan-x pan-y; }
+.zoom-badge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  margin: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .6);
+  color: #fff;
+  font-size: .75rem;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 #preview { display: block; max-width: 100%; max-height: 76vh; height: auto; border-radius: 4px; box-shadow: 0 2px 12px rgba(0,0,0,.18); background: #fff; }
 .preview-empty { margin: 0; }
@@ -312,6 +333,7 @@ button:disabled { cursor: not-allowed; opacity: .45; }
 
 /* Hidden areas: overlay sits exactly on top of the preview canvas */
 .canvas-wrap { position: relative; display: inline-flex; max-width: 100%; }
+.preview-stage.zoomed .canvas-wrap { max-width: none; }
 .canvas-wrap:has(#preview[hidden]) { display: none; }
 .region-overlay { position: absolute; inset: 0; }
 .region-overlay.drawing { cursor: crosshair; touch-action: none; }

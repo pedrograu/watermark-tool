@@ -6,6 +6,7 @@ import { openPdf, renderPage } from './pdf-reader.js?v=dev';
 import { buildPdf } from './pdf-writer.js?v=dev';
 import { applyRedactions } from './redact.js?v=dev';
 import { createRegionEditor } from './region-editor.js?v=dev';
+import { createZoom } from './zoom.js?v=dev';
 
 // Output presets. PDFs are rendered at `dpi`; images are downscaled so the
 // long edge is at most `maxEdge`. `quality` is the JPEG quality.
@@ -15,6 +16,8 @@ const PRESETS = {
   high: { dpi: 200, maxEdge: Infinity, quality: 0.85 },
 };
 const PREVIEW_MAX_EDGE = 1400;
+// When zoomed in, the preview is re-rendered sharper, up to this multiple.
+const PREVIEW_MAX_DETAIL = 3;
 const MAX_FILES = 50;
 
 const $ = (id) => document.getElementById(id);
@@ -173,6 +176,7 @@ async function selectDoc(index) {
   state.source = null;
   state.selected = index;
   state.page = 1;
+  zoom.reset();
   renderFileList();
   if (!doc) return showEmptyPreview();
   try {
@@ -260,6 +264,7 @@ function showEmptyPreview() {
   $('pager').hidden = true;
   editor.setDrawMode(false);
   editor.render();
+  zoom.reset();
   updateHideToolbar();
 }
 
@@ -297,9 +302,35 @@ function updateHideToolbar() {
   $('hide-hint').hidden = !drawing || count > 0; // it covers the page top, so only until the first area
 }
 
+// ---------- Zoom ----------
+
+const zoom = createZoom({
+  stage: $('stage'),
+  canvas: preview,
+  badge: $('zoom-badge'),
+  canPan: (e) => !editor.isDrawing() && [$('stage'), $('region-overlay'), preview].includes(e.target),
+  onPinchStart: () => editor.cancel(),
+  onChange: scheduleDetail,
+});
+
+// Re-render the page sharper (or lighter) once zooming settles.
+let detailTimer = 0;
+let renderedEdge = 0;
+function scheduleDetail() {
+  clearTimeout(detailTimer);
+  detailTimer = setTimeout(() => {
+    if (state.previewBase && previewEdge() !== renderedEdge) refreshPreviewBase();
+  }, 250);
+}
+
 function setDrawMode(on) {
   editor.setDrawMode(on);
   updateHideToolbar();
+}
+
+/** Longest side of the preview render: sharper when zoomed in. */
+function previewEdge() {
+  return PREVIEW_MAX_EDGE * Math.min(PREVIEW_MAX_DETAIL, Math.ceil(zoom.level()));
 }
 
 async function refreshPreviewBase() {
@@ -308,14 +339,14 @@ async function refreshPreviewBase() {
   let base;
   if (source.bitmap) {
     const { width: w, height: h } = source.bitmap;
-    const scale = Math.min(1, PREVIEW_MAX_EDGE / Math.max(w, h));
+    const scale = clampScale(w, h, Math.min(1, previewEdge() / Math.max(w, h)));
     base = createCanvas(w * scale, h * scale).canvas;
     base.getContext('2d').drawImage(source.bitmap, 0, 0, base.width, base.height);
     $('pager').hidden = true;
   } else {
     const token = state.loadToken;
     const pageCount = source.pdf.numPages;
-    const r = await renderPage(source.pdf, state.page, (w, h) => PREVIEW_MAX_EDGE / Math.max(w, h));
+    const r = await renderPage(source.pdf, state.page, (w, h) => previewEdge() / Math.max(w, h));
     if (token !== state.loadToken) return releaseCanvas(r.canvas);
     base = r.canvas;
     $('page-info').textContent = `${state.page} / ${pageCount}`;
@@ -325,6 +356,7 @@ async function refreshPreviewBase() {
   }
   if (state.previewBase) releaseCanvas(state.previewBase);
   state.previewBase = base;
+  renderedEdge = previewEdge();
   drawPreview();
   editor.render();
   updateHideToolbar();
@@ -356,6 +388,7 @@ async function goToPage(delta) {
   const next = state.page + delta;
   if (!pdf || next < 1 || next > pdf.numPages) return;
   state.page = next;
+  zoom.reset();
   await refreshPreviewBase();
 }
 

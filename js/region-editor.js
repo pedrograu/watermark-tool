@@ -11,6 +11,7 @@ const clamp = (v, min, max) => Math.min(max, Math.max(min, v));
  */
 export function createRegionEditor(overlay, { getRegions, onChange }) {
   let drawMode = false;
+  let active = null; // the drag in progress: {end, abort}
 
   const point = (e) => {
     const box = overlay.getBoundingClientRect();
@@ -27,8 +28,9 @@ export function createRegionEditor(overlay, { getRegions, onChange }) {
     el.style.height = `${r.h * 100}%`;
   };
 
-  // Follow one pointer until it is released.
-  function drag(e, update, done) {
+  // Follow one pointer until it is released. `abort` undoes it if a pinch
+  // (second finger) interrupts.
+  function drag(e, update, done, abort) {
     e.preventDefault();
     e.stopPropagation();
     const target = e.currentTarget;
@@ -38,12 +40,14 @@ export function createRegionEditor(overlay, { getRegions, onChange }) {
       onChange();
     };
     const end = () => {
+      active = null;
       target.removeEventListener('pointermove', move);
       target.removeEventListener('pointerup', end);
       target.removeEventListener('pointercancel', end);
       done?.();
       onChange();
     };
+    active = { end, abort };
     target.addEventListener('pointermove', move);
     target.addEventListener('pointerup', end);
     target.addEventListener('pointercancel', end);
@@ -99,6 +103,11 @@ export function createRegionEditor(overlay, { getRegions, onChange }) {
     regions.push(r);
     const el = regionElement(r);
     overlay.append(el);
+    const discard = () => {
+      if (!regions.includes(r)) return;
+      regions.splice(regions.indexOf(r), 1);
+      el.remove();
+    };
     drag(e, (p) => {
       r.x = Math.min(start.x, p.x);
       r.y = Math.min(start.y, p.y);
@@ -106,11 +115,8 @@ export function createRegionEditor(overlay, { getRegions, onChange }) {
       r.h = Math.abs(p.y - start.y);
       place(el, r);
     }, () => {
-      if (r.w < MIN_SIZE || r.h < MIN_SIZE) {
-        regions.splice(regions.indexOf(r), 1);
-        el.remove();
-      }
-    });
+      if (r.w < MIN_SIZE || r.h < MIN_SIZE) discard();
+    }, discard);
   });
 
   function render() {
@@ -122,5 +128,13 @@ export function createRegionEditor(overlay, { getRegions, onChange }) {
     overlay.classList.toggle('drawing', on);
   }
 
-  return { render, setDrawMode, isDrawing: () => drawMode };
+  /** Stop the current drag; a half-drawn area is discarded. */
+  function cancel() {
+    if (!active) return;
+    const { end, abort } = active;
+    abort?.();
+    end();
+  }
+
+  return { render, setDrawMode, cancel, isDrawing: () => drawMode };
 }
