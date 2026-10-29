@@ -107,8 +107,21 @@
     </section>
 
     <section class="panel preview" aria-label="Preview">
+      <div id="hide-toolbar" class="hide-toolbar" hidden>
+        <button type="button" id="hide-toggle" class="btn-small" aria-pressed="false">Hide an area</button>
+        <div id="hide-style" class="segmented compact" role="radiogroup" aria-label="How to hide" hidden>
+          <label><input type="radio" form="settings" name="hide" value="box" checked> Black box</label>
+          <label><input type="radio" form="settings" name="hide" value="pixelate"> Pixelate</label>
+          <label title="Blurred numbers can sometimes be guessed back. Use Black box for sensitive data."><input type="radio" form="settings" name="hide" value="blur"> Blur</label>
+        </div>
+        <button type="button" id="hide-clear" class="btn-link" hidden>Remove areas</button>
+      </div>
       <div class="preview-stage">
-        <canvas id="preview" aria-label="Watermarked preview" hidden></canvas>
+        <p id="hide-hint" class="hide-hint" hidden>Drag over the part to hide · this page only</p>
+        <div class="canvas-wrap">
+          <canvas id="preview" aria-label="Watermarked preview" hidden></canvas>
+          <div id="region-overlay" class="region-overlay"></div>
+        </div>
         <p id="preview-empty" class="preview-empty">The preview will appear here.</p>
       </div>
       <nav id="pager" class="pager" aria-label="PDF pages" hidden>

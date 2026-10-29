@@ -4,6 +4,8 @@
 import { drawWatermark, toGrayscale, createCanvas, canvasToBlob, releaseCanvas, clampScale } from './watermark.js?v=dev';
 import { openPdf, renderPage } from './pdf-reader.js?v=dev';
 import { buildPdf } from './pdf-writer.js?v=dev';
+import { applyRedactions } from './redact.js?v=dev';
+import { createRegionEditor } from './region-editor.js?v=dev';
 
 // Output presets. PDFs are rendered at `dpi`; images are downscaled so the
 // long edge is at most `maxEdge`. `quality` is the JPEG quality.
@@ -47,6 +49,7 @@ function getSettings() {
     quality: f.quality.value,
     format: f.format.value,
     grayscale: f.grayscale.checked,
+    hide: f.hide.value,
   };
 }
 
@@ -114,7 +117,8 @@ function closeSource(source) {
 /** Check that a file can be read and count its pages. */
 async function probe(file) {
   const kind = isPdf(file) ? 'pdf' : 'image';
-  const doc = { id: nextId++, file, kind, pageCount: 1 };
+  // regions: page number → hidden areas on that page
+  const doc = { id: nextId++, file, kind, pageCount: 1, regions: new Map() };
   const source = await openSource(doc);
   if (kind === 'pdf') doc.pageCount = source.pdf.numPages;
   closeSource(source);
@@ -252,6 +256,48 @@ function showEmptyPreview() {
   preview.hidden = true;
   $('preview-empty').hidden = false;
   $('pager').hidden = true;
+  editor.setDrawMode(false);
+  editor.render();
+  updateHideToolbar();
+}
+
+// ---------- Hidden areas ----------
+
+/** Hidden areas of the page shown in the preview ([] if none). */
+function currentRegions(create) {
+  const doc = state.docs[state.selected];
+  if (!doc) return [];
+  if (!doc.regions.has(state.page)) {
+    if (!create) return [];
+    doc.regions.set(state.page, []);
+  }
+  return doc.regions.get(state.page);
+}
+
+const editor = createRegionEditor($('region-overlay'), {
+  getRegions: currentRegions,
+  onChange: () => {
+    schedulePreview();
+    updateHideToolbar();
+  },
+});
+
+function updateHideToolbar() {
+  const drawing = editor.isDrawing();
+  const count = currentRegions(false).length;
+  $('hide-toolbar').hidden = !state.previewBase;
+  $('hide-toggle').setAttribute('aria-pressed', String(drawing));
+  $('hide-toggle').textContent = drawing ? 'Done' : 'Hide an area';
+  $('hide-style').hidden = !drawing && !count;
+  // Shown together with the styles (not on first area) so the preview never jumps while drawing
+  $('hide-clear').hidden = !drawing && !count;
+  $('hide-clear').disabled = !count;
+  $('hide-hint').hidden = !drawing || count > 0; // it covers the page top, so only until the first area
+}
+
+function setDrawMode(on) {
+  editor.setDrawMode(on);
+  updateHideToolbar();
 }
 
 async function refreshPreviewBase() {
@@ -278,6 +324,8 @@ async function refreshPreviewBase() {
   if (state.previewBase) releaseCanvas(state.previewBase);
   state.previewBase = base;
   drawPreview();
+  editor.render();
+  updateHideToolbar();
 }
 
 let frame = 0;
@@ -295,6 +343,7 @@ function drawPreview() {
   const ctx = preview.getContext('2d');
   ctx.drawImage(base, 0, 0);
   if (s.grayscale) toGrayscale(ctx, base.width, base.height);
+  applyRedactions(ctx, base.width, base.height, currentRegions(false), s.hide);
   drawWatermark(ctx, base.width, base.height, s);
   preview.hidden = false;
   $('preview-empty').hidden = true;
@@ -315,24 +364,26 @@ function stem(fileName) {
 }
 
 /** Draw a bitmap at preset size with grayscale + watermark applied. */
-function watermarkBitmap(bitmap, s, preset) {
+function watermarkBitmap(bitmap, s, preset, regions) {
   const { width: w, height: h } = bitmap;
   const scale = clampScale(w, h, Math.min(1, preset.maxEdge / Math.max(w, h)));
   const { canvas, ctx } = createCanvas(w * scale, h * scale);
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
   if (s.grayscale) toGrayscale(ctx, canvas.width, canvas.height);
+  applyRedactions(ctx, canvas.width, canvas.height, regions, s.hide);
   drawWatermark(ctx, canvas.width, canvas.height, s);
   return canvas;
 }
 
 /** Watermark every page of a PDF and return them as JPEG pages for buildPdf. */
-async function pdfToPages(pdf, s, preset, onPage) {
+async function pdfToPages(pdf, s, preset, onPage, regionsByPage) {
   const pages = [];
   for (let n = 1; n <= pdf.numPages; n++) {
     onPage(n);
     const { canvas, ctx, ptW, ptH } = await renderPage(pdf, n, () => preset.dpi / 72);
     try {
       if (s.grayscale) toGrayscale(ctx, canvas.width, canvas.height);
+      applyRedactions(ctx, canvas.width, canvas.height, regionsByPage.get(n), s.hide);
       drawWatermark(ctx, canvas.width, canvas.height, s);
       const jpeg = await canvasToBlob(canvas, 'image/jpeg', preset.quality);
       pages.push({ jpeg: new Uint8Array(await jpeg.arrayBuffer()), pxW: canvas.width, pxH: canvas.height, ptW, ptH });
@@ -348,11 +399,11 @@ async function exportDoc(doc, s, preset, onPage) {
   const source = await openSource(doc);
   try {
     if (doc.kind === 'pdf') {
-      const pages = await pdfToPages(source.pdf, s, preset, onPage);
+      const pages = await pdfToPages(source.pdf, s, preset, onPage, doc.regions);
       return { blob: buildPdf(pages), name: `${stem(doc.file.name)}_watermarked.pdf` };
     }
     onPage(1);
-    const canvas = watermarkBitmap(source.bitmap, s, preset);
+    const canvas = watermarkBitmap(source.bitmap, s, preset, doc.regions.get(1));
     try {
       const isJpeg = s.format === 'image/jpeg';
       const blob = await canvasToBlob(canvas, s.format, isJpeg ? preset.quality : undefined);
@@ -441,6 +492,18 @@ async function onExport(event) {
 }
 
 // ---------- Events ----------
+
+$('hide-toggle').addEventListener('click', () => setDrawMode(!editor.isDrawing()));
+$('hide-style').addEventListener('input', schedulePreview); // radios live outside the form element
+$('hide-clear').addEventListener('click', () => {
+  currentRegions(false).length = 0;
+  editor.render();
+  schedulePreview();
+  updateHideToolbar();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && editor.isDrawing()) setDrawMode(false);
+});
 
 form.addEventListener('input', () => {
   updateOutputs();

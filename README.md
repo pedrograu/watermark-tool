@@ -24,6 +24,12 @@ you have to send with a rental application — **entirely in your browser**.
   watermarked file.
 - Watermark text (multi-line), opacity, size, angle, color.
 - Tiled (repeated, hard to crop) or single centered layout.
+- **Hide areas** such as the ID number: click *Hide an area* above the preview
+  and drag over it. Areas can be moved, resized and removed, and belong to one
+  page of one file. Styles: **Black box** (recommended for numbers and other
+  sensitive data), **Pixelate** and **Blur**. Blurred or pixelated text can
+  sometimes be guessed back, so use Black box for anything sensitive. Because
+  the output is flattened, the hidden content is not in the file at all.
 - Live preview with page navigation for PDFs.
 - PDFs are **flattened**: each page becomes an image with the watermark burned
   in, so the watermark can't be removed with a PDF editor. The output text is
@@ -62,6 +68,8 @@ js/app.js             UI wiring and export flow
 js/watermark.js       draws the watermark on a canvas (shared)
 js/pdf-reader.js      pdf.js wrapper: PDF page → canvas
 js/pdf-writer.js      minimal PDF writer: JPEG pages → PDF
+js/redact.js          paints hidden areas (box / pixelate / blur)
+js/region-editor.js   draw, move, resize hidden areas on the preview
 vendor/pdfjs/         pdf.js 4.10.38 (Apache-2.0), self-hosted
 ```
 
