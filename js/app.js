@@ -217,6 +217,50 @@ function clearAll() {
   setBusy(false);
 }
 
+// ---------- Rename ----------
+
+/** Turn a list item into a name field; Enter or leaving saves, Esc cancels. */
+function startRename(li, doc) {
+  if (state.busy || li.querySelector('.rename')) return;
+  const ext = outputExt(doc);
+  const box = document.createElement('span');
+  box.className = 'rename';
+  const input = document.createElement('input');
+  input.className = 'rename-input';
+  input.value = doc.outName || `${stem(doc.file.name)}_watermarked`;
+  input.setAttribute('aria-label', 'File name');
+  input.spellcheck = false;
+  const suffix = document.createElement('span');
+  suffix.className = 'rename-ext';
+  suffix.textContent = `.${ext}`;
+  box.append(input, suffix);
+  li.querySelector('.file-select').replaceWith(box);
+  li.classList.add('renaming');
+  input.focus();
+  input.select();
+
+  let done = false;
+  const finish = (save) => {
+    if (done) return;
+    done = true;
+    if (save) {
+      const clean = input.value
+        .replace(/[\\/:*?"<>|\u0000-\u001f]/g, '') // not allowed in file names
+        .trim()
+        .replace(new RegExp(`\\.${ext}$`, 'i'), '') // the extension is added for them
+        .replace(/[. ]+$/, '')
+        .slice(0, 120);
+      doc.outName = clean && clean !== `${stem(doc.file.name)}_watermarked` ? clean : null;
+    }
+    renderFileList();
+  };
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') finish(true);
+    if (e.key === 'Escape') finish(false);
+  });
+  input.addEventListener('blur', () => finish(true));
+}
+
 function renderFileList() {
   const list = $('file-list');
   list.replaceChildren(...state.docs.map((doc, i) => {
@@ -230,7 +274,8 @@ function renderFileList() {
     select.title = 'Show in preview';
     const name = document.createElement('span');
     name.className = 'name';
-    name.textContent = doc.file.name;
+    name.textContent = doc.outName ? `${doc.outName}.${outputExt(doc)}` : doc.file.name;
+    if (doc.outName) name.title = `Original: ${doc.file.name}`;
     const meta = document.createElement('span');
     meta.className = 'meta';
     const pages = doc.kind === 'pdf' ? ` · ${doc.pageCount} page${doc.pageCount > 1 ? 's' : ''}` : '';
@@ -238,15 +283,24 @@ function renderFileList() {
     meta.title = `${doc.kind === 'pdf' ? `PDF${pages}` : 'Image'} · ${formatBytes(doc.file.size)}`;
     select.append(name, meta);
     select.addEventListener('click', () => i !== state.selected && selectDoc(i));
+    select.addEventListener('dblclick', () => startRename(li, doc));
+
+    const rename = document.createElement('button');
+    rename.type = 'button';
+    rename.className = 'file-action';
+    rename.innerHTML = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg>';
+    rename.setAttribute('aria-label', `Rename ${doc.file.name}`);
+    rename.title = 'Rename';
+    rename.addEventListener('click', () => startRename(li, doc));
 
     const remove = document.createElement('button');
     remove.type = 'button';
-    remove.className = 'file-remove';
+    remove.className = 'file-action file-remove';
     remove.innerHTML = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
     remove.setAttribute('aria-label', `Remove ${doc.file.name}`);
     remove.addEventListener('click', () => removeDoc(i));
 
-    li.append(select, remove);
+    li.append(select, rename, remove);
     return li;
   }));
   list.hidden = !state.docs.length;
@@ -398,6 +452,17 @@ function stem(fileName) {
   return fileName.replace(/\.[^.]+$/, '') || 'document';
 }
 
+/** Extension of the file a doc will be downloaded as. */
+function outputExt(doc) {
+  if (doc.kind === 'pdf') return 'pdf';
+  return getSettings().format === 'image/png' ? 'png' : 'jpg';
+}
+
+/** Custom name if the user renamed the file, else "<original>_watermarked". */
+function outputName(doc) {
+  return `${doc.outName || `${stem(doc.file.name)}_watermarked`}.${outputExt(doc)}`;
+}
+
 /** Draw a bitmap at preset size with grayscale + watermark applied. */
 function watermarkBitmap(bitmap, s, preset, regions) {
   const { width: w, height: h } = bitmap;
@@ -435,14 +500,14 @@ async function exportDoc(doc, s, preset, onPage) {
   try {
     if (doc.kind === 'pdf') {
       const pages = await pdfToPages(source.pdf, s, preset, onPage, doc.regions);
-      return { blob: buildPdf(pages), name: `${stem(doc.file.name)}_watermarked.pdf` };
+      return { blob: buildPdf(pages), name: outputName(doc) };
     }
     onPage(1);
     const canvas = watermarkBitmap(source.bitmap, s, preset, doc.regions.get(1));
     try {
       const isJpeg = s.format === 'image/jpeg';
       const blob = await canvasToBlob(canvas, s.format, isJpeg ? preset.quality : undefined);
-      return { blob, name: `${stem(doc.file.name)}_watermarked.${isJpeg ? 'jpg' : 'png'}` };
+      return { blob, name: outputName(doc) };
     } finally {
       releaseCanvas(canvas);
     }
@@ -539,7 +604,8 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && editor.isDrawing()) setDrawMode(false);
 });
 
-form.addEventListener('input', () => {
+form.addEventListener('input', (e) => {
+  if (e.target.name === 'format') renderFileList(); // renamed files show the new extension
   updateOutputs();
   schedulePreview();
 });
