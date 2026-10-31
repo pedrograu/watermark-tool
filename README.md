@@ -3,7 +3,7 @@
 Add a semi-transparent text watermark to images and PDFs — for example an ID
 you have to send with a rental application — **entirely in your browser**.
 
-**Live:** https://pedrograu.github.io/watermark-tool/
+**Live:** https://pedrograu.github.io/watermark/
 
 ## Privacy
 
