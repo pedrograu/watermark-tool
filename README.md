@@ -25,6 +25,8 @@ you have to send with a rental application — **entirely in your browser**.
 - Rename a file before downloading (pencil icon, or double-click its name):
   `12dfsfdsf.pdf` renamed to `PedroId` downloads as `PedroId.pdf`. Files you
   don't rename download as `<original>_watermarked`.
+- Pictures are saved as **PDF** by default, or as JPEG/PNG (Options → Format). As PDF,
+  each picture becomes a one-page PDF sized to the picture.
 - Watermark text (multi-line), opacity, size, angle, color.
 - Tiled (repeated, hard to crop) or single centered layout.
 - **Hide areas** such as the ID number: click *Hide* above the preview

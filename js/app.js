@@ -18,6 +18,8 @@ const PRESETS = {
 const PREVIEW_MAX_EDGE = 1400;
 // When zoomed in, the preview is re-rendered sharper, up to this multiple.
 const PREVIEW_MAX_DETAIL = 3;
+// A picture saved as PDF gets a page whose long side is A4's long side.
+const IMAGE_PAGE_LONG_EDGE_PT = 842;
 const MAX_FILES = 50;
 
 const $ = (id) => document.getElementById(id);
@@ -454,8 +456,9 @@ function stem(fileName) {
 
 /** Extension of the file a doc will be downloaded as. */
 function outputExt(doc) {
-  if (doc.kind === 'pdf') return 'pdf';
-  return getSettings().format === 'image/png' ? 'png' : 'jpg';
+  const { format } = getSettings();
+  if (doc.kind === 'pdf' || format === 'application/pdf') return 'pdf';
+  return format === 'image/png' ? 'png' : 'jpg';
 }
 
 /** Custom name if the user renamed the file, else "<original>_watermarked". */
@@ -505,6 +508,18 @@ async function exportDoc(doc, s, preset, onPage) {
     onPage(1);
     const canvas = watermarkBitmap(source.bitmap, s, preset, doc.regions.get(1));
     try {
+      if (s.format === 'application/pdf') {
+        const jpeg = await canvasToBlob(canvas, 'image/jpeg', preset.quality);
+        const k = IMAGE_PAGE_LONG_EDGE_PT / Math.max(canvas.width, canvas.height);
+        const page = {
+          jpeg: new Uint8Array(await jpeg.arrayBuffer()),
+          pxW: canvas.width,
+          pxH: canvas.height,
+          ptW: canvas.width * k,
+          ptH: canvas.height * k,
+        };
+        return { blob: buildPdf([page]), name: outputName(doc) };
+      }
       const isJpeg = s.format === 'image/jpeg';
       const blob = await canvasToBlob(canvas, s.format, isJpeg ? preset.quality : undefined);
       return { blob, name: outputName(doc) };

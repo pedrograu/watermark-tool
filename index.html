@@ -72,8 +72,8 @@
           </div>
 
           <div class="row" id="spacing-row">
-            <label for="spacing">Spacing <output for="spacing" id="spacing-out">2×</output></label>
-            <input id="spacing" name="spacing" type="range" min="0.5" max="5" step="0.25" value="2">
+            <label for="spacing">Spacing <output for="spacing" id="spacing-out">5×</output></label>
+            <input id="spacing" name="spacing" type="range" min="0.5" max="10" step="0.25" value="5">
           </div>
 
           <div class="row inline" role="radiogroup" aria-labelledby="quality-label">
@@ -88,8 +88,9 @@
           <div class="row inline" id="format-row" role="radiogroup" aria-labelledby="format-label">
             <span id="format-label" class="label">Format</span>
             <div class="segmented">
-              <label><input type="radio" name="format" value="image/jpeg" checked> JPEG</label>
+              <label><input type="radio" name="format" value="image/jpeg"> JPEG</label>
               <label><input type="radio" name="format" value="image/png"> PNG</label>
+              <label title="Put each picture on a PDF page"><input type="radio" name="format" value="application/pdf" checked> PDF</label>
             </div>
           </div>
 
