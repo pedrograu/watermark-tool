@@ -272,8 +272,11 @@ function renderFileList() {
     const select = document.createElement('button');
     select.type = 'button';
     select.className = 'file-select';
-    select.setAttribute('aria-pressed', String(i === state.selected));
-    select.title = 'Show in preview';
+    const selected = i === state.selected;
+    select.setAttribute('aria-pressed', String(selected));
+    // Like a file manager: the first tap selects, tapping the selected file renames it.
+    select.title = selected ? 'Rename' : 'Show in preview';
+    if (selected) select.setAttribute('aria-label', `Rename ${doc.outName || doc.file.name}`);
     const name = document.createElement('span');
     name.className = 'name';
     name.textContent = doc.outName ? `${doc.outName}.${outputExt(doc)}` : doc.file.name;
@@ -284,16 +287,7 @@ function renderFileList() {
     meta.textContent = doc.kind === 'pdf' ? `${doc.pageCount} page${doc.pageCount > 1 ? 's' : ''}` : formatBytes(doc.file.size);
     meta.title = `${doc.kind === 'pdf' ? `PDF${pages}` : 'Image'} · ${formatBytes(doc.file.size)}`;
     select.append(name, meta);
-    select.addEventListener('click', () => i !== state.selected && selectDoc(i));
-    select.addEventListener('dblclick', () => startRename(li, doc));
-
-    const rename = document.createElement('button');
-    rename.type = 'button';
-    rename.className = 'file-action';
-    rename.innerHTML = '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4"/></svg>';
-    rename.setAttribute('aria-label', `Rename ${doc.file.name}`);
-    rename.title = 'Rename';
-    rename.addEventListener('click', () => startRename(li, doc));
+    select.addEventListener('click', () => (selected ? startRename(li, doc) : selectDoc(i)));
 
     const remove = document.createElement('button');
     remove.type = 'button';
@@ -302,7 +296,7 @@ function renderFileList() {
     remove.setAttribute('aria-label', `Remove ${doc.file.name}`);
     remove.addEventListener('click', () => removeDoc(i));
 
-    li.append(select, rename, remove);
+    li.append(select, remove);
     return li;
   }));
   list.hidden = !state.docs.length;

@@ -22,7 +22,7 @@ you have to send with a rental application — **entirely in your browser**.
 - Several files at once (up to 50): the same settings apply to all, click a
   file in the list to preview it, and each one downloads as its own
   watermarked file.
-- Rename a file before downloading (pencil icon, or double-click its name):
+- Rename a file before downloading (click the selected file's name):
   `12dfsfdsf.pdf` renamed to `PedroId` downloads as `PedroId.pdf`. Files you
   don't rename download as `<original>_watermarked`.
 - Pictures are saved as **PDF** by default, or as JPEG/PNG (Options → Format). As PDF,

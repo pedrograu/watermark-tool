@@ -158,6 +158,8 @@ body:not(.has-files) .drop-small { display: none; }
 }
 .file-select .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .9rem; }
 .file-item.selected .name { font-weight: 600; }
+.file-item.selected .file-select { cursor: text; }
+.file-item.selected .file-select:hover .name { text-decoration: underline dotted; text-underline-offset: 3px; }
 .file-select .meta { flex: none; margin-left: auto; color: var(--muted); font-size: .78rem; }
 .file-action { background: transparent; color: var(--muted); border: 0; padding: 6px 6px; opacity: 0; transition: opacity .15s, color .15s; }
 .file-action:last-child { padding-right: 10px; }
